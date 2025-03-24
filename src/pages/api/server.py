@@ -18,17 +18,28 @@ def get_stores():
     stores = [{"value": row.Id, "label": f"{row.code_gold} : {row.LIB}"} for row in cursor.fetchall()]
     return jsonify(stores)
 
+def get_db_connection():
+    return pyodbc.connect(r'DRIVER={SQL Server};'
+                          r'SERVER=X75VC\SQLEXPRESS;'
+                          r'DATABASE=GestionOS;'
+                          r'Trusted_Connection=yes;')
+
 @app.route('/products', methods=['GET'])
 def get_products():
+    conn = get_db_connection()  # Create a new connection
     cursor = conn.cursor()
-    cursor.execute("SELECT Id, EAN, Produit FROM os_detail")  # Include Id for later use
+    cursor.execute("SELECT Id, EAN, Produit FROM os_detail")
     products = [{"value": row.Id, "label": f"{row.EAN} : {row.Produit}"} for row in cursor.fetchall()]
-    return jsonify(products)
+    conn.close()  # Close the connection after query execution
+    return jsonify(products) 
+
 
 @app.route('/stock', methods=['GET'])
 def get_stock():
     store_id = request.args.get('store_id')
     product_id = request.args.get('product_id')
+
+    print(f"Received store_id: {store_id}, product_id: {product_id}")  # Debugging
 
     if not store_id or not product_id:
         return jsonify({"error": "Missing store_id or product_id"}), 400
@@ -50,8 +61,10 @@ def get_stock():
     result = cursor.fetchone()
 
     if result:
+        print(f"Stock found: {result[0]}")  # Debugging
         return jsonify({"stock_quantity": result[0]})
     else:
+        print("No stock found")  # Debugging
         return jsonify({"stock_quantity": None})
 
 if __name__ == '__main__':

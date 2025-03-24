@@ -26,18 +26,21 @@ export default function Predict() {
   // Fetch stock quantity when store and product are selected
   useEffect(() => {
     if (store && product) {
+      console.log("Fetching stock for", { store, product });
       axios.get(`http://127.0.0.1:5000/stock?store_id=${store}&product_id=${product}`)
         .then(response => {
+          console.log("Stock response:", response.data);
           setStockQuantity(response.data.stock_quantity !== null ? response.data.stock_quantity : "");
         })
         .catch(error => {
           console.error("Error fetching stock quantity:", error);
-          setStockQuantity(""); // Clear stock quantity on error
+          setStockQuantity("");
         });
     } else {
-      setStockQuantity(""); // Clear stock quantity if store or product is not selected
+      setStockQuantity("");
     }
   }, [store, product]);
+  
 
   const handleSubmit = (e) => {
     e.preventDefault();
