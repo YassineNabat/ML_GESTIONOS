@@ -12,6 +12,8 @@ export default function Predict() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [stockQuantity, setStockQuantity] = useState("");
+  const [predictedQuantity, setPredictedQuantity] = useState(null); // Nouvel état pour la prédiction
+  const [predictionError, setPredictionError] = useState(null); // Nouvel état pour les erreurs de prédiction
 
   const [storeOptions, setStoreOptions] = useState([]);
   const [productOptions, setProductOptions] = useState([]);
@@ -81,15 +83,42 @@ export default function Predict() {
   // Gérer le changement de produit
   const handleProductChange = (selectedOption) => {
     setProduct(selectedOption.value);     // ID produit
-    setProductEAN(selectedOption.ean);    // EAN
+    setProductEAN(selectedOption.ean);     // EAN
     setProductLabel(selectedOption.label); // Description du produit
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Envoie l'objet avec store et productEAN (noter que product correspond maintenant à store dans l'objet JSON)
-    console.log({ store: product, product: productEAN, startDate, endDate, stockQuantity });
-    // Ici, tu peux envoyer les données du formulaire à l'API avec les bons noms de variables
+    setPredictedQuantity(null); // Réinitialiser la prédiction précédente
+    setPredictionError(null);   // Réinitialiser les erreurs précédentes
+
+    // Vérifier si tous les champs nécessaires sont remplis
+    if (!store || !product || !startDate || !endDate) {
+      setPredictionError("Veuillez sélectionner un magasin, un produit et une période.");
+      return;
+    }
+
+    // Préparer les données à envoyer au backend
+    const predictionData = {
+      magasin: store, // Utiliser l'ID du magasin
+      produit: productEAN, // Utiliser l'EAN du produit
+      date_debut_consommation: startDate,
+      date_fin_consommation: endDate,
+      stock_actuel: stockQuantity ? parseInt(stockQuantity) : 0 // Inclure le stock actuel
+    };
+
+    // Envoyer la requête POST à l'endpoint de prédiction
+    axios.post("http://127.0.0.1:5000/predict", predictionData)
+      .then(response => {
+        setPredictedQuantity(response.data.predicted_quantity);
+      })
+      .catch(error => {
+        console.error("Erreur lors de la prédiction:", error);
+        setPredictionError("Erreur lors de la prédiction. Veuillez réessayer.");
+        if (error.response && error.response.data && error.response.data.error) {
+          setPredictionError(`Erreur lors de la prédiction: ${error.response.data.error}`);
+        }
+      });
   };
 
   const handleCancel = () => {
@@ -100,6 +129,8 @@ export default function Predict() {
     setStartDate("");
     setEndDate("");
     setStockQuantity("");
+    setPredictedQuantity(null); // Réinitialiser la quantité prédite
+    setPredictionError(null);   // Réinitialiser les erreurs
     const flatpickrInstance = flatpickr.instances.find(fp => fp.element.id === 'flatpickr-range');
     if (flatpickrInstance) {
       flatpickrInstance.clear();
@@ -155,7 +186,7 @@ export default function Predict() {
             <input
               type="text"
               className="input col-span-9 mt-2 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:border-stone-500 focus:ring-stone-500"
-              placeholder="YYYY-MM-DD to<ctrl3348>-MM-DD"
+              placeholder="YYYY-MM-DD to YYYY-MM-DD"
               id="flatpickr-range"
             />
           </div>
@@ -180,6 +211,21 @@ export default function Predict() {
           <button type="submit"
             className="bg-stone-500 px-6 py-2 rounded-md hover:bg-stone-700 text-white">Prédire</button>
         </div>
+
+        {/* Affichage de la prédiction */}
+        {predictedQuantity !== null && (
+          <div className="mt-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
+            <p className="font-semibold">Quantité à commander prédite : {predictedQuantity}</p>
+          </div>
+        )}
+
+        {/* Affichage des erreurs de prédiction */}
+        {predictionError && (
+          <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+            <p className="font-semibold">Erreur : {predictionError}</p>
+          </div>
+        )}
+
       </form>
     </div>
   );
