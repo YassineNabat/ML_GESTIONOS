@@ -5,9 +5,10 @@ import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 
 export default function Predict() {
-  const [store, setStore] = useState("");
-  const [product, setProduct] = useState("");
-  const [productLabel, setProductLabel] = useState(""); // Stocke la description du produit
+  const [store, setStore] = useState(""); // Store : identifiant du magasin
+  const [product, setProduct] = useState(""); // Product : identifiant du produit
+  const [productEAN, setProductEAN] = useState(""); // ProductEAN : identifiant du produit
+  const [productLabel, setProductLabel] = useState(""); // Description du produit
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [stockQuantity, setStockQuantity] = useState("");
@@ -27,7 +28,7 @@ export default function Predict() {
         const formattedProducts = response.data.map(product => {
           const [ean, ...descriptionParts] = product.label.split(" : ");
           return {
-            value: product.value,
+            value: product.value, // ID du produit
             ean: ean, // L'EAN seul
             label: descriptionParts.join(" : ") // La description du produit
           };
@@ -79,18 +80,22 @@ export default function Predict() {
 
   // Gérer le changement de produit
   const handleProductChange = (selectedOption) => {
-    setProduct(selectedOption.value);   // Stocke l'ID produit
-    setProductLabel(selectedOption.label); // Stocke la description
+    setProduct(selectedOption.value);     // ID produit
+    setProductEAN(selectedOption.ean);    // EAN
+    setProductLabel(selectedOption.label); // Description du produit
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log({ store, product, startDate, endDate, stockQuantity });
+    // Envoie l'objet avec store et productEAN (noter que product correspond maintenant à store dans l'objet JSON)
+    console.log({ store: product, product: productEAN, startDate, endDate, stockQuantity });
+    // Ici, tu peux envoyer les données du formulaire à l'API avec les bons noms de variables
   };
 
   const handleCancel = () => {
     setStore("");
     setProduct("");
+    setProductEAN("");
     setProductLabel("");
     setStartDate("");
     setEndDate("");
@@ -150,7 +155,7 @@ export default function Predict() {
             <input
               type="text"
               className="input col-span-9 mt-2 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:border-stone-500 focus:ring-stone-500"
-              placeholder="YYYY-MM-DD to YYYY-MM-DD"
+              placeholder="YYYY-MM-DD to<ctrl3348>-MM-DD"
               id="flatpickr-range"
             />
           </div>
