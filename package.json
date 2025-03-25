@@ -10,6 +10,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.8.4",
     "cors": "^2.8.5",
+    "flatpickr": "^4.6.13",
     "msnodesqlv8": "^4.5.0",
     "mssql": "^11.0.1",
     "react": "^19.0.0",

@@ -2,7 +2,7 @@ import { useState } from "react";
 
 export default function Train() {
   const [jsonInput, setJsonInput] = useState("{}");
-  const [parsedData, setParsedData] = useState(null);
+  const [ setParsedData] = useState(null);
   const [error, setError] = useState(null);
 
   const handleParse = (e) => {

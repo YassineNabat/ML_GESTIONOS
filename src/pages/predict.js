@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import axios from "axios";
+import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.min.css";
 
 export default function Predict() {
   const [store, setStore] = useState("");
   const [product, setProduct] = useState("");
+  const [productLabel, setProductLabel] = useState(""); // Stocke la description du produit
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [stockQuantity, setStockQuantity] = useState("");
@@ -12,44 +15,90 @@ export default function Predict() {
   const [storeOptions, setStoreOptions] = useState([]);
   const [productOptions, setProductOptions] = useState([]);
 
-  // Fetch stores and products from API
+  // Récupération des magasins et produits
   useEffect(() => {
     axios.get("http://127.0.0.1:5000/stores")
       .then(response => setStoreOptions(response.data))
-      .catch(error => console.error("Error fetching stores:", error));
+      .catch(error => console.error("Erreur récupération magasins:", error));
 
     axios.get("http://127.0.0.1:5000/products")
-      .then(response => setProductOptions(response.data))
-      .catch(error => console.error("Error fetching products:", error));
+      .then(response => {
+        // On s'assure que chaque option a bien une valeur et un label séparés
+        const formattedProducts = response.data.map(product => {
+          const [ean, ...descriptionParts] = product.label.split(" : ");
+          return {
+            value: product.value,
+            ean: ean, // L'EAN seul
+            label: descriptionParts.join(" : ") // La description du produit
+          };
+        });
+        setProductOptions(formattedProducts);
+      })
+      .catch(error => console.error("Erreur récupération produits:", error));
   }, []);
 
-  // Fetch stock quantity when store and product are selected
+  // Récupération de la quantité en stock
   useEffect(() => {
     if (store && product) {
-      console.log("Fetching stock for", { store, product });
       axios.get(`http://127.0.0.1:5000/stock?store_id=${store}&product_id=${product}`)
         .then(response => {
-          console.log("Stock response:", response.data);
           setStockQuantity(response.data.stock_quantity !== null ? response.data.stock_quantity : "");
         })
         .catch(error => {
-          console.error("Error fetching stock quantity:", error);
+          console.error("Erreur récupération stock:", error);
           setStockQuantity("");
         });
     } else {
       setStockQuantity("");
     }
   }, [store, product]);
-  
+
+  // Initialisation de flatpickr et gestion de la sélection de dates
+  useEffect(() => {
+    const fp = flatpickr("#flatpickr-range", {
+      mode: 'range',
+      dateFormat: "Y-m-d",
+      onChange: (dates) => {
+        if (dates.length === 2) {
+          setStartDate(dates[0].toISOString().slice(0, 10));
+          setEndDate(dates[1].toISOString().slice(0, 10));
+        } else {
+          setStartDate("");
+          setEndDate("");
+        }
+      }
+    });
+
+    // Cleanup function to destroy flatpickr instance
+    return () => {
+      if (fp) {
+        fp.destroy();
+      }
+    };
+  }, []);
+
+  // Gérer le changement de produit
+  const handleProductChange = (selectedOption) => {
+    setProduct(selectedOption.value);   // Stocke l'ID produit
+    setProductLabel(selectedOption.label); // Stocke la description
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log({ store, product, startDate, endDate, stockQuantity });
-    // Here you would typically send the data to your prediction API
   };
 
   const handleCancel = () => {
-    setStore(""); setProduct(""); setStartDate(""); setEndDate(""); setStockQuantity("");
+    setStore("");
+    setProduct("");
+    setProductLabel("");
+    setStartDate("");
+    setEndDate("");
+    setStockQuantity("");
+    const flatpickrInstance = flatpickr.instances.find(fp => fp.element.id === 'flatpickr-range');
+    if (flatpickrInstance) {
+      flatpickrInstance.clear();
+    }
   };
 
   return (
@@ -69,29 +118,42 @@ export default function Predict() {
           />
         </div>
 
-        {/* Product Dropdown */}
+        {/* Product Dropdown (EAN only) */}
         <div className="mb-4 grid grid-cols-12 gap-4">
-          <label className="col-span-3 text-sm font-semibold text-gray-700">Produit</label>
+          <label className="col-span-3 text-sm font-semibold text-gray-700">EAN</label>
           <Select
             value={productOptions.find(opt => opt.value === product) || null}
-            onChange={(selectedOption) => setProduct(selectedOption.value)}
-            options={productOptions}
+            onChange={handleProductChange}
+            options={productOptions} // Affiche l’EAN et conserve les autres données
+            getOptionLabel={(opt) => opt.ean} // Force l'affichage de l'EAN dans la liste déroulante
             className="col-span-9 mt-2 w-full"
-            placeholder="Sélectionnez un produit"
+            placeholder="Sélectionnez un EAN"
           />
         </div>
 
-        {/* Date Inputs */}
+        {/* Readonly Input for Product Name */}
         <div className="mb-4 grid grid-cols-12 gap-4">
-          <label className="col-span-3 text-sm font-semibold text-gray-700">Date de début</label>
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                 className="col-span-9 mt-2 w-full px-4 py-2 border border-gray-300 rounded-md" />
+          <label className="col-span-3 text-sm font-semibold text-gray-700">Produit</label>
+          <input
+            type="text"
+            value={productLabel}
+            readOnly
+            className="col-span-9 mt-2 w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100"
+            placeholder="Nom du produit"
+          />
         </div>
 
+        {/* Date Range Picker */}
         <div className="mb-4 grid grid-cols-12 gap-4">
-          <label className="col-span-3 text-sm font-semibold text-gray-700">Date de fin</label>
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-                 className="col-span-9 mt-2 w-full px-4 py-2 border border-gray-300 rounded-md" />
+          <label className="col-span-3 text-sm font-semibold text-gray-700">Période</label>
+          <div className="col-span-9 mt-2">
+            <input
+              type="text"
+              className="input col-span-9 mt-2 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:border-stone-500 focus:ring-stone-500"
+              placeholder="YYYY-MM-DD to YYYY-MM-DD"
+              id="flatpickr-range"
+            />
+          </div>
         </div>
 
         {/* Stock Quantity */}
@@ -100,25 +162,18 @@ export default function Predict() {
           <input
             type="number"
             value={stockQuantity}
-            readOnly // Make it read-only as it's fetched from the backend
-            className="col-span-9 mt-2 w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100"
+            readOnly
+            className="col-span-9 mt-2 w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 shadow-sm"
             placeholder="Quantité restante"
           />
         </div>
 
-        {/* Manual Stock Quantity (Optional - if you still want to allow manual input) */}
-        {/* <div className="mb-4 grid grid-cols-12 gap-4">
-          <label className="col-span-3 text-sm font-semibold text-gray-700">Quantité de stock (prédiction)</label>
-          <input type="number" value={stockQuantity} onChange={(e) => setStockQuantity(e.target.value)}
-                 className="col-span-9 mt-2 w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="Ex: 100" />
-        </div> */}
-
         {/* Buttons */}
         <div className="flex justify-between">
           <button type="button" onClick={handleCancel}
-                  className="bg-gray-300 px-6 py-2 rounded-md hover:bg-gray-400">Annuler</button>
+            className="bg-gray-300 px-6 py-2 rounded-md hover:bg-gray-400">Annuler</button>
           <button type="submit"
-                  className="bg-stone-500 px-6 py-2 rounded-md hover:bg-stone-700 text-white">Prédire</button>
+            className="bg-stone-500 px-6 py-2 rounded-md hover:bg-stone-700 text-white">Prédire</button>
         </div>
       </form>
     </div>
