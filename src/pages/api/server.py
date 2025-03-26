@@ -15,6 +15,14 @@ import joblib  # Pour sauvegarder et charger le modèle
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
+import datetime
+from functools import wraps
+
+SECRET_KEY = "your_secret_key"  # Changez cette clé pour plus de sécurité
+
+users = {}  # Simule une base de données pour les utilisateurs
 
 # --- Configuration de la base de données ---
 DB_CONFIG = {
@@ -36,17 +44,17 @@ def load_data_for_prediction():
         conn = get_db_connection()
         cursor = conn.cursor()
         query = """
-        select TOP(1000) S.Code_GOLD as magasin, D.EAN as produit,
-                T.DATE_DEBUT_VENTE as date_debut_consommation,
-                T.DATE_FIN_VENTE as date_fin_consommation,
-                OSE.Stock_Actuel as stock_actuel,
-                OSE.Engagement_arrondi_au_Colisage as quantite_a_commander
+        select TOP(1000000) S.Code_GOLD as magasin, D.EAN as produit,
+                        T.DATE_DEBUT_VENTE as date_debut_consommation,
+                        T.DATE_FIN_VENTE as date_fin_consommation,
+                        OSE.Stock_Actuel as stock_actuel,
+                        OSE.Engagement_arrondi_au_Colisage as quantite_a_commander
         from site S join ENSEIGNE E on S.ENS_ID=E.Id
-                join os on OS.ENS_ID= E.Id
-                join OS_DETAIL D on D.OS_ID = OS.Id
-                join OS_ENGAGEMENT OSE on OSE.OS_DETAIL_ID=D.Id
-                join THEME_TYPE TT on TT.ENS_ID = E.Id
-                join THEME T on T.Type_id=TT.Id;
+                    join os on OS.ENS_ID= E.Id
+                    join OS_DETAIL D on D.OS_ID = OS.Id
+                    join OS_ENGAGEMENT OSE on OSE.OS_DETAIL_ID=D.Id
+                    join THEME_TYPE TT on TT.ENS_ID = E.Id
+                    join THEME T on T.Type_id=TT.Id;
         """
         df = pd.read_sql(query, conn)
         return df
@@ -77,7 +85,7 @@ def preprocess_data(df):
     df = df.dropna()
 
     # Encodage des variables catégorielles (magasin, produit)
-    df = pd.get_dummies(df, columns=['magasin', 'produit'], drop_first=True)
+    df = pd.get_dummies(df, columns=['magasin', 'produit'], drop_first=True) # MODIFICATION ICI
 
     # Sélectionner les fonctionnalités et la variable cible
     features = [col for col in df.columns if col not in ['quantite_a_commander', 'date_debut_consommation', 'date_fin_consommation']]
@@ -136,7 +144,24 @@ CORS(app)  # Autoriser les requêtes cross-origin
 
 # --- 4. Points de terminaison API ---
 
+def token_required(f):
+    """Décorateur pour vérifier le token JWT."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            return jsonify({"error": "Token manquant"}), 401
+        try:
+            jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token expiré"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Token invalide"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
 @app.route('/predict', methods=['POST'])
+@token_required
 def predict_command():
     """Endpoint pour prédire la quantité à commander."""
     global loaded_model, features_columns
@@ -148,22 +173,31 @@ def predict_command():
         if not data:
             return jsonify({"error": "Données d'entrée non fournies."}), 400
 
-        # Préparer les données d'entrée pour la prédiction
+        print("Données reçues pour la prédiction :", data)
+        print("Noms des colonnes des features chargés :", features_columns)
+
         input_df = pd.DataFrame([data])
 
-        # **IMPORTANT:** Appliquer le même prétraitement qu'à l'entraînement
-        try:
-            input_df['date_debut_consommation'] = pd.to_datetime(input_df.get('date_debut_consommation'))
-            input_df['date_fin_consommation'] = pd.to_datetime(input_df.get('date_fin_consommation'))
-            input_df['duree_consommation'] = (input_df['date_fin_consommation'] - input_df['date_debut_consommation']).dt.days
-            input_df['mois_debut'] = input_df['date_debut_consommation'].dt.month
-            # Gérer les catégories (magasin, produit) - assurez-vous que les colonnes encodées existent
-            for col in features_columns:
-                if col not in input_df.columns:
-                    input_df[col] = 0
-            input_df = input_df[features_columns] # Assurer l'ordre des colonnes
-        except Exception as e:
-            return jsonify({"error": f"Erreur lors du prétraitement des données d'entrée: {e}"}), 400
+        # Convertir les dates (comme dans preprocess_data)
+        input_df['date_debut_consommation'] = pd.to_datetime(input_df.get('date_debut_consommation'))
+        input_df['date_fin_consommation'] = pd.to_datetime(input_df.get('date_fin_consommation'))
+
+        # Calculer la durée de consommation et le mois de début (comme dans preprocess_data)
+        input_df['duree_consommation'] = (input_df['date_fin_consommation'] - input_df['date_debut_consommation']).dt.days
+        input_df['mois_debut'] = input_df['date_debut_consommation'].dt.month
+
+        # Encodage one-hot pour 'magasin' et 'produit'
+        input_df = pd.get_dummies(input_df, columns=['magasin', 'produit'], drop_first=True)
+
+        print("DataFrame après prétraitement :", input_df)
+
+        # Ajouter les colonnes manquantes (qui étaient présentes lors de l'entraînement) et assurer l'ordre
+        for col in features_columns:
+            if col not in input_df.columns:
+                input_df[col] = 0
+        input_df = input_df[features_columns]
+
+        print("DataFrame utilisé pour la prédiction :", input_df)
 
         # Faire la prédiction
         prediction = loaded_model.predict(input_df)[0]
@@ -174,6 +208,7 @@ def predict_command():
         return jsonify({"error": f"Erreur lors de la prédiction: {e}"}), 500
 
 @app.route('/train', methods=['POST'])
+@token_required
 def train_model_endpoint():
     """Endpoint pour entraîner manuellement le modèle avec de nouvelles données."""
     global loaded_model, features_columns
@@ -246,12 +281,27 @@ def get_stores():
 
 @app.route('/products', methods=['GET'])
 def get_products():
-    """Retourne la liste des produits."""
+    """Retourne la liste des produits pour un magasin donné."""
+    store_id = request.args.get('store_id')
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT Id, EAN, Produit FROM os_detail")
-        products = [{"value": row.Id, "label": f"{row.EAN} : {row.Produit}"} for row in cursor.fetchall()]
+        if (store_id):
+            query = """
+                SELECT DET.Id, DET.EAN, DET.Produit
+                FROM OS_ENGAGEMENT OSE
+                JOIN SITE S ON OSE.Site_ID = S.Id
+                JOIN OS_DETAIL DET ON OSE.OS_DETAIL_ID = DET.Id
+                WHERE S.Id = ?
+                GROUP BY DET.Id, DET.EAN, DET.Produit
+            """
+            cursor.execute(query, (store_id,))
+            products = [{"value": row.Id, "label": f"{row.EAN} : {row.Produit}"} for row in cursor.fetchall()]
+        else:
+            # Si aucun store_id n'est fourni, retourner tous les produits (ou une liste vide, selon votre besoin)
+            cursor.execute("SELECT Id, EAN, Produit FROM os_detail")
+            products = [{"value": row.Id, "label": f"{row.EAN} : {row.Produit}"} for row in cursor.fetchall()]
         return jsonify(products)
     except pyodbc.Error as ex:
         sqlstate = ex.args[0]
@@ -300,6 +350,70 @@ def get_stock():
         sqlstate = ex.args[0]
         print(f"Erreur de base de données (stock): {sqlstate}")
         return jsonify({"error": f"Erreur lors de la récupération du stock: {sqlstate}"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({"error": "Nom d'utilisateur et mot de passe requis"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Vérifier si l'utilisateur existe déjà
+        cursor.execute("SELECT id FROM [user] WHERE username = ?", (username,))
+        if cursor.fetchone():
+            return jsonify({"error": "Utilisateur déjà existant"}), 400
+
+        # Hacher le mot de passe et insérer l'utilisateur
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')  # Utiliser un algorithme plus court
+        query = "INSERT INTO [user] (username, password) VALUES (?, ?)"
+        print(f"Exécution de la requête : {query} avec username={username}, password={hashed_password}")  # Debug
+        cursor.execute(query, (username, hashed_password))
+        conn.commit()
+
+        return jsonify({"message": "Inscription réussie"}), 201
+    except pyodbc.Error as ex:
+        sqlstate = ex.args[0]
+        print(f"Erreur de base de données (inscription): {sqlstate}, {ex}")  # Ajout du message d'erreur complet
+        return jsonify({"error": "Erreur lors de l'inscription"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({"error": "Nom d'utilisateur et mot de passe requis"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Récupérer l'utilisateur depuis la base de données
+        cursor.execute("SELECT password FROM [user] WHERE username = ?", (username,))
+        result = cursor.fetchone()
+        if not result or not check_password_hash(result[0], password):
+            return jsonify({"error": "Identifiants invalides"}), 401
+
+        # Générer un token JWT
+        token = jwt.encode({'username': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, SECRET_KEY)
+        return jsonify({"token": token}), 200
+    except pyodbc.Error as ex:
+        sqlstate = ex.args[0]
+        print(f"Erreur de base de données (connexion): {sqlstate}")
+        return jsonify({"error": "Erreur lors de la connexion"}), 500
     finally:
         if conn:
             conn.close()

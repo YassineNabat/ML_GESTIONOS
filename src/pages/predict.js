@@ -15,32 +15,48 @@ export default function Predict() {
   const [predictedQuantity, setPredictedQuantity] = useState(null); // Nouvel état pour la prédiction
   const [predictionError, setPredictionError] = useState(null); // Nouvel état pour les erreurs de prédiction
 
-  const [storeOptions, setStoreOptions] = useState([]);
-  const [productOptions, setProductOptions] = useState([]);
+  const [storeOptions, setStoreOptions] = useState();
+  const [productOptions, setProductOptions] = useState();
+  const [hasStoreBeenSelected, setHasStoreBeenSelected] = useState(false); // NOUVEL ÉTAT
 
-  // Récupération des magasins et produits
+  // Récupération des magasins
   useEffect(() => {
     axios.get("http://127.0.0.1:5000/stores")
       .then(response => setStoreOptions(response.data))
       .catch(error => console.error("Erreur récupération magasins:", error));
-
-    axios.get("http://127.0.0.1:5000/products")
-      .then(response => {
-        // On s'assure que chaque option a bien une valeur et un label séparés
-        const formattedProducts = response.data.map(product => {
-          const [ean, ...descriptionParts] = product.label.split(" : ");
-          return {
-            value: product.value, // ID du produit
-            ean: ean, // L'EAN seul
-            label: descriptionParts.join(" : ") // La description du produit
-          };
-        });
-        setProductOptions(formattedProducts);
-      })
-      .catch(error => console.error("Erreur récupération produits:", error));
   }, []);
 
-  // Récupération de la quantité en stock
+  // Récupération des produits en fonction du magasin sélectionné (MODIFIÉ)
+  useEffect(() => {
+    if (store && !hasStoreBeenSelected) {
+      axios.get(`http://127.0.0.1:5000/products?store_id=${store}`)
+        .then(response => {
+          const formattedProducts = response.data.map(product => {
+            const [ean, ...descriptionParts] = product.label.split(" : ");
+            return {
+              value: product.value,
+              ean: ean,
+              label: descriptionParts.join(" : ")
+            };
+          });
+          setProductOptions(formattedProducts);
+          setProduct("");
+          setProductEAN("");
+          setProductLabel("");
+          setHasStoreBeenSelected(true); // Marquer la récupération comme effectuée
+        })
+        .catch(error => console.error("Erreur récupération produits:", error));
+    } else if (!store) {
+      // Réinitialiser l'état si aucun magasin n'est sélectionné
+      setProductOptions();
+      setProduct("");
+      setProductEAN("");
+      setProductLabel("");
+      setHasStoreBeenSelected(false); // Permettre une nouvelle récupération si un magasin est sélectionné à nouveau
+    }
+  }, [store, hasStoreBeenSelected]);
+
+  // Récupération de la quantité en stock (inchangé)
   useEffect(() => {
     if (store && product) {
       axios.get(`http://127.0.0.1:5000/stock?store_id=${store}&product_id=${product}`)
@@ -56,7 +72,7 @@ export default function Predict() {
     }
   }, [store, product]);
 
-  // Initialisation de flatpickr et gestion de la sélection de dates
+  // Initialisation de flatpickr et gestion de la sélection de dates (inchangé)
   useEffect(() => {
     const fp = flatpickr("#flatpickr-range", {
       mode: 'range',
@@ -72,7 +88,6 @@ export default function Predict() {
       }
     });
 
-    // Cleanup function to destroy flatpickr instance
     return () => {
       if (fp) {
         fp.destroy();
@@ -80,34 +95,39 @@ export default function Predict() {
     };
   }, []);
 
-  // Gérer le changement de produit
+  // Gérer le changement de produit (inchangé)
   const handleProductChange = (selectedOption) => {
     setProduct(selectedOption.value);     // ID produit
     setProductEAN(selectedOption.ean);     // EAN
     setProductLabel(selectedOption.label); // Description du produit
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setPredictedQuantity(null); // Réinitialiser la prédiction précédente
-    setPredictionError(null);   // Réinitialiser les erreurs précédentes
+  // Gérer le changement de magasin (NOUVELLE FONCTION)
+  const handleStoreChange = (selectedOption) => {
+    setStore(selectedOption.value);
+    setHasStoreBeenSelected(false); // Réinitialiser le flag lorsqu'un nouveau magasin est sélectionné
+  };
 
-    // Vérifier si tous les champs nécessaires sont remplis
+ const handleSubmit = (e) => {
+    e.preventDefault();
+    setPredictedQuantity(null);
+    setPredictionError(null);
+
     if (!store || !product || !startDate || !endDate) {
       setPredictionError("Veuillez sélectionner un magasin, un produit et une période.");
       return;
     }
 
-    // Préparer les données à envoyer au backend
     const predictionData = {
-      magasin: store, // Utiliser l'ID du magasin
-      produit: productEAN, // Utiliser l'EAN du produit
+      magasin: store,
+      produit: productEAN,
       date_debut_consommation: startDate,
       date_fin_consommation: endDate,
-      stock_actuel: stockQuantity ? parseInt(stockQuantity) : 0 // Inclure le stock actuel
+      stock_actuel: stockQuantity ? parseInt(stockQuantity) : 0
     };
 
-    // Envoyer la requête POST à l'endpoint de prédiction
+    console.log("Données envoyées pour la prédiction :", predictionData); // AJOUTER CETTE LIGNE
+
     axios.post("http://127.0.0.1:5000/predict", predictionData)
       .then(response => {
         setPredictedQuantity(response.data.predicted_quantity);
@@ -142,32 +162,32 @@ export default function Predict() {
       <h2 className="text-2xl font-semibold text-center mb-6">Prédire les ventes</h2>
       <form onSubmit={handleSubmit} className="bg-stone-200 p-6 shadow-xl rounded-md">
 
-        {/* Store Dropdown */}
+        {/* Store Dropdown (MODIFIÉ - Utilise handleStoreChange) */}
         <div className="mb-4 grid grid-cols-12 gap-4">
           <label className="col-span-3 text-sm font-semibold text-gray-700">Magasin</label>
           <Select
-            value={storeOptions.find(opt => opt.value === store) || null}
-            onChange={(selectedOption) => setStore(selectedOption.value)}
-            options={storeOptions}
+            value={(storeOptions || []).find(opt => opt.value === store) || null}
+            onChange={handleStoreChange} // Utiliser la nouvelle fonction
+            options={storeOptions || []}
             className="col-span-9 mt-2 w-full"
             placeholder="Sélectionnez un magasin"
           />
         </div>
 
-        {/* Product Dropdown (EAN only) */}
+        {/* Product Dropdown (EAN only) (inchangé) */}
         <div className="mb-4 grid grid-cols-12 gap-4">
           <label className="col-span-3 text-sm font-semibold text-gray-700">EAN</label>
           <Select
-            value={productOptions.find(opt => opt.value === product) || null}
+            value={(productOptions || []).find(opt => opt.value === product) || null}
             onChange={handleProductChange}
-            options={productOptions} // Affiche l’EAN et conserve les autres données
-            getOptionLabel={(opt) => opt.ean} // Force l'affichage de l'EAN dans la liste déroulante
+            options={productOptions || []}
+            getOptionLabel={(opt) => opt.ean}
             className="col-span-9 mt-2 w-full"
             placeholder="Sélectionnez un EAN"
           />
         </div>
 
-        {/* Readonly Input for Product Name */}
+        {/* Readonly Input for Product Name (inchangé) */}
         <div className="mb-4 grid grid-cols-12 gap-4">
           <label className="col-span-3 text-sm font-semibold text-gray-700">Produit</label>
           <input
@@ -179,7 +199,7 @@ export default function Predict() {
           />
         </div>
 
-        {/* Date Range Picker */}
+        {/* Date Range Picker (inchangé) */}
         <div className="mb-4 grid grid-cols-12 gap-4">
           <label className="col-span-3 text-sm font-semibold text-gray-700">Période</label>
           <div className="col-span-9 mt-2">
@@ -192,7 +212,7 @@ export default function Predict() {
           </div>
         </div>
 
-        {/* Stock Quantity */}
+        {/* Stock Quantity (inchangé) */}
         <div className="mb-4 grid grid-cols-12 gap-4">
           <label className="col-span-3 text-sm font-semibold text-gray-700">Quantité restante</label>
           <input
@@ -204,7 +224,7 @@ export default function Predict() {
           />
         </div>
 
-        {/* Buttons */}
+        {/* Buttons (inchangé) */}
         <div className="flex justify-between">
           <button type="button" onClick={handleCancel}
             className="bg-gray-300 px-6 py-2 rounded-md hover:bg-gray-400">Annuler</button>
@@ -212,14 +232,14 @@ export default function Predict() {
             className="bg-stone-500 px-6 py-2 rounded-md hover:bg-stone-700 text-white">Prédire</button>
         </div>
 
-        {/* Affichage de la prédiction */}
+        {/* Affichage de la prédiction (inchangé) */}
         {predictedQuantity !== null && (
           <div className="mt-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
             <p className="font-semibold">Quantité à commander prédite : {predictedQuantity}</p>
           </div>
         )}
 
-        {/* Affichage des erreurs de prédiction */}
+        {/* Affichage des erreurs de prédiction (inchangé) */}
         {predictionError && (
           <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
             <p className="font-semibold">Erreur : {predictionError}</p>
