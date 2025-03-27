@@ -3,19 +3,16 @@ import axios from "axios";
 
 export default function Train() {
   const [jsonInput, setJsonInput] = useState("{}");
-  const [parsedData, setParsedData] = useState(null);
   const [error, setError] = useState(null);
   const [trainMessage, setTrainMessage] = useState(null); // Nouvel état pour les messages d'entraînement
 
   const handleTrain = async (e) => {
     e.preventDefault();
-    setParsedData(null);
     setError(null);
     setTrainMessage(null); // Réinitialiser le message d'entraînement
 
     try {
       const parsed = JSON.parse(jsonInput);
-      setParsedData(parsed);
 
       // Envoyer les données JSON au backend pour l'entraînement
       const response = await axios.post("http://127.0.0.1:5000/train", parsed);
@@ -42,7 +39,6 @@ export default function Train() {
 
   const handleCancel = () => {
     setJsonInput("{}");
-    setParsedData(null);
     setError(null);
     setTrainMessage(null);
   };

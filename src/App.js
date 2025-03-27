@@ -7,6 +7,8 @@ import Train from './pages/train';
 import Predict from './pages/predict';
 import Login from './pages/login';
 import Register from './pages/register';
+import React from 'react';
+import { useAuth } from './auth/useAuth';
 
 // Composant pour protéger les routes
 function PrivateRoute({ children }) {
@@ -15,6 +17,10 @@ function PrivateRoute({ children }) {
 }
 
 function App() {
+  const { isAuthenticated, logout } = useAuth();
+
+ 
+
   return (
     <div className="App">
       <BrowserRouter>
@@ -28,6 +34,12 @@ function App() {
         </Routes>
         <Footer />
       </BrowserRouter>
+      {isAuthenticated ? (
+        <div>
+          <h1>Bienvenue !</h1>
+          <button onClick={logout}>Se déconnecter</button>
+        </div>
+      ) : null}
     </div>
   );
 }
