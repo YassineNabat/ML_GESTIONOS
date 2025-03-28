@@ -14,7 +14,7 @@ export default function Header() {
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register"; // Vérifier si on est sur Login/Register
 
   return (
-    <nav className="bg-stone-700 border-b shadow py-1 mb-3">
+    <nav className="bg-black bg-opacity-50 border-b shadow py-1 mb-3">
       <div className="container mx-auto flex items-center justify-between max-w-4xl">
         <Link className="text-lg font-semibold" to="/">
           <img className="h-16 w-auto" src={logo} alt="" />
