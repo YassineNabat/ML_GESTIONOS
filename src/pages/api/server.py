@@ -483,6 +483,45 @@ def login():
         if conn:
             conn.close()
 
+@app.route('/change-password', methods=['POST'])
+@token_required
+def change_password():
+    data = request.get_json()
+    current_password = data.get('currentPassword')
+    new_password = data.get('newPassword')
+
+    if not current_password or not new_password:
+        return jsonify({"error": "Mot de passe actuel et nouveau mot de passe requis"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Récupérer l'utilisateur depuis le token
+        token = request.headers.get('Authorization')
+        decoded_token = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        username = decoded_token.get('username')
+
+        # Vérifier le mot de passe actuel
+        cursor.execute("SELECT password FROM [user] WHERE username = ?", (username,))
+        result = cursor.fetchone()
+        if not result or not check_password_hash(result[0], current_password):
+            return jsonify({"error": "Mot de passe actuel incorrect"}), 401
+
+        # Mettre à jour avec le nouveau mot de passe
+        hashed_password = generate_password_hash(new_password, method='pbkdf2:sha256')
+        cursor.execute("UPDATE [user] SET password = ? WHERE username = ?", (hashed_password, username))
+        conn.commit()
+
+        return jsonify({"message": "Mot de passe changé avec succès"}), 200
+    except pyodbc.Error as ex:
+        sqlstate = ex.args[0]
+        print(f"Erreur de base de données (changement de mot de passe): {sqlstate}")
+        return jsonify({"error": "Erreur lors du changement de mot de passe"}), 500
+    finally:
+        if conn:
+            conn.close()
+
 if __name__ == '__main__':
     # Charger les données initiales et entraîner le modèle au démarrage (une seule fois)
     initial_data = load_data_for_prediction()

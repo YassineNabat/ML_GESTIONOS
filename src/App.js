@@ -11,6 +11,7 @@ import Dashboard from './pages/dashboard';
 import React from 'react';
 import { useAuth } from './auth/useAuth';
 import Sidebar from './components/sidebar';
+import ChangePassword from './pages/changePassword';
 
 // Composant pour protéger les routes
 function PrivateRoute({ children }) {
@@ -40,6 +41,7 @@ function App() {
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/train" element={<PrivateRoute><Train /></PrivateRoute>} />
           <Route path="/predict" element={<PrivateRoute><Predict /></PrivateRoute>} />
+          <Route path="/change-password" element={<PrivateRoute><ChangePassword /></PrivateRoute>} />
           {/* Routes publiques */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
