@@ -3,15 +3,15 @@ import logo from "../images/logo.png";
 
 export default function Header() {
   const navigate = useNavigate();
-  const location = useLocation(); // Récupérer l'emplacement actuel
+  const location = useLocation();
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken"); // Supprimer le token
-    navigate("/login"); // Rediriger vers la page de connexion
+    localStorage.removeItem("authToken");
+    navigate("/login");
   };
 
   const isAuthenticated = !!localStorage.getItem("authToken");
-  const isAuthPage = location.pathname === "/login" || location.pathname === "/register"; // Vérifier si on est sur Login/Register
+  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
 
   return (
     <nav className="bg-black bg-opacity-50 border-b shadow py-1 mb-3">
@@ -22,17 +22,7 @@ export default function Header() {
 
         <div className="lg:flex items-center space-x-6">
           <ul className="flex space-x-8">
-            {!isAuthPage && ( // Cacher Train et Predict sur Login/Register
-              <>
-                <li className="font-bold text-center hover:text-gray-200">
-                  <Link to="/train">Train</Link>
-                </li>
-                <li className="font-bold text-center hover:text-gray-200">
-                  <Link to="/predict">Predict</Link>
-                </li>
-              </>
-            )}
-            {!isAuthenticated && (
+            {!isAuthenticated && !isAuthPage && (
               <>
                 <li className="font-bold text-center hover:text-gray-200">
                   <Link to="/login">Login</Link>
@@ -43,11 +33,19 @@ export default function Header() {
               </>
             )}
             {isAuthenticated && (
-              <li className="font-bold text-center hover:text-gray-200">
-                <button onClick={handleLogout} className="text-white">
-                  Logout
-                </button>
-              </li>
+              <>
+                <li className="font-bold text-center hover:text-gray-200">
+                  <Link to="/train">Train</Link>
+                </li>
+                <li className="font-bold text-center hover:text-gray-200">
+                  <Link to="/predict">Predict</Link>
+                </li>
+                <li className="font-bold text-center hover:text-gray-200">
+                  <button onClick={handleLogout} className="text-white">
+                    Logout
+                  </button>
+                </li>
+              </>
             )}
           </ul>
         </div>

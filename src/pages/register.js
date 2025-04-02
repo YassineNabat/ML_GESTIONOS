@@ -55,6 +55,12 @@ export default function Register() {
         >
           S'inscrire
         </button>
+        <p className="text-sm text-center mt-4">
+          Déjà un compte ?{" "}
+          <a href="/login" className="text-stone-500 hover:underline">
+            Se connecter
+          </a>
+        </p>
       </form>
     </div>
   );

@@ -7,39 +7,45 @@ import Train from './pages/train';
 import Predict from './pages/predict';
 import Login from './pages/login';
 import Register from './pages/register';
+import Dashboard from './pages/dashboard';
 import React from 'react';
 import { useAuth } from './auth/useAuth';
+import Sidebar from './components/sidebar';
 
 // Composant pour protéger les routes
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("authToken");
-  return token ? children : <Navigate to="/login" />;
+  return token ? (
+    <div className="flex">
+      <Sidebar />
+      <div className="ml-64 w-full">{children}</div>
+    </div>
+  ) : (
+    <Navigate to="/login" />
+  );
 }
 
 function App() {
-  const { isAuthenticated, logout } = useAuth();
-
- 
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="App">
       <BrowserRouter>
         <Header />
         <Routes>
-          <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} /> {/* Protection ajoutée */}
+          {/* Redirection conditionnelle pour la page Home */}
+          <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/home"} />} />
+          <Route path="/home" element={<Home />} />
+          {/* Routes protégées avec Sidebar */}
+          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/train" element={<PrivateRoute><Train /></PrivateRoute>} />
           <Route path="/predict" element={<PrivateRoute><Predict /></PrivateRoute>} />
+          {/* Routes publiques */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Routes>
         <Footer />
       </BrowserRouter>
-      {isAuthenticated ? (
-        <div>
-          <h1>Bienvenue !</h1>
-          <button onClick={logout}>Se déconnecter</button>
-        </div>
-      ) : null}
     </div>
   );
 }

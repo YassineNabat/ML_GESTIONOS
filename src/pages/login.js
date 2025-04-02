@@ -16,7 +16,7 @@ export default function Login() {
       const response = await axios.post("http://127.0.0.1:5000/login", { username, password });
       if (response.data.token) {
         localStorage.setItem("authToken", response.data.token); // Stocker le token dans localStorage
-        navigate("/"); // Rediriger vers la page d'accueil
+        navigate("/dashboard"); // Rediriger vers le tableau de bord
       }
     } catch (err) {
       setError(err.response?.data?.error || "Erreur lors de la connexion.");
@@ -54,6 +54,12 @@ export default function Login() {
         >
           Se connecter
         </button>
+        <p className="text-sm text-center mt-4">
+          Pas encore de compte ?{" "}
+          <a href="/register" className="text-stone-500 hover:underline">
+            Créer un compte
+          </a>
+        </p>
       </form>
     </div>
   );
