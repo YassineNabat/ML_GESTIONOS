@@ -4,23 +4,21 @@ import axios from "axios";
 export default function Train() {
   const [jsonInput, setJsonInput] = useState("{}");
   const [error, setError] = useState(null);
-  const [trainMessage, setTrainMessage] = useState(null); // Nouvel état pour les messages d'entraînement
+  const [trainMessage, setTrainMessage] = useState(null);
 
   const handleTrain = async (e) => {
     e.preventDefault();
     setError(null);
-    setTrainMessage(null); // Réinitialiser le message d'entraînement
+    setTrainMessage(null);
 
     try {
       const parsed = JSON.parse(jsonInput);
 
-      // Envoyer les données JSON au backend pour l'entraînement
       const response = await axios.post("http://127.0.0.1:5000/train", parsed);
 
-      // Gérer la réponse du backend
       if (response && response.data && response.data.message) {
         setTrainMessage({ type: "success", text: response.data.message });
-        setJsonInput("{}"); // Réinitialiser le champ JSON après un succès
+        setJsonInput("{}");
       } else {
         setTrainMessage({ type: "info", text: "L'entraînement s'est terminé, mais la réponse du serveur est inattendue." });
       }
@@ -44,48 +42,61 @@ export default function Train() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-8 mb-20">
-      <h2 className="text-2xl font-semibold text-center mb-6">Entraînement du Modèle</h2>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Entraînement du Modèle</h2>
 
-      <form onSubmit={handleTrain} className="bg-stone-200 p-6 shadow-xl rounded-md border border-gray-300">
-        <div className="mb-4 grid grid-cols-12 gap-4">
-          <label htmlFor="jsonInput" className="col-span-3 text-sm font-semibold text-gray-700">
-            JSON Input
-          </label>
-          <textarea
-            id="jsonInput"
-            className="col-span-9 mt-2 w-full p-2 border border-gray-300 rounded-md font-mono bg-gray-50 focus:ring-2 focus:ring-stone-500 focus:outline-none"
-            rows="6"
-            value={jsonInput}
-            onChange={(e) => setJsonInput(e.target.value)}
-            placeholder="Entrez le JSON ici..."
-          ></textarea>
-        </div>
+        <form onSubmit={handleTrain} className="bg-white p-8 rounded-xl shadow-2xl transform hover:scale-[1.01] transition-all duration-300">
+          <div className="mb-6">
+            <label htmlFor="jsonInput" className="block text-lg font-semibold text-gray-700 mb-3">
+              Données d'entraînement (JSON)
+            </label>
+            <textarea
+              id="jsonInput"
+              className="w-full h-64 p-4 border border-gray-300 rounded-lg font-mono text-sm bg-gray-50 
+                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+              value={jsonInput}
+              onChange={(e) => setJsonInput(e.target.value)}
+              placeholder="{&#10;  &quot;data&quot;: [&#10;    {&#10;      &quot;feature&quot;: &quot;value&quot;&#10;    }&#10;  ]&#10;}"
+            ></textarea>
+          </div>
 
-        {error && <p className="text-red-500 mt-2">{error}</p>}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 font-medium">{error}</p>
+            </div>
+          )}
 
-        <div className="flex justify-between">
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="bg-gray-300 transition-transform transform hover:scale-105 text-gray-800 px-6 py-2 rounded-md hover:bg-gray-400 hover:font-semibold focus:ring-2 focus:ring-gray-400 focus:outline-none"
-          >
-            Annuler
-          </button>
-          <button
-            type="submit"
-            className="bg-stone-500 transition-transform transform hover:scale-105 shadow-stone-500/50 px-6 py-2 rounded-md hover:bg-stone-700 text-slate-100 hover:font-semibold focus:ring-2 focus:ring-stone-700 focus:outline-none"
-          >
-            Entraîner le Modèle
-          </button>
-        </div>
-      </form>
+          {trainMessage && (
+            <div className={`mb-6 p-4 rounded-lg ${
+              trainMessage.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'
+            }`}>
+              <p className={`font-medium ${
+                trainMessage.type === 'success' ? 'text-green-600' : 'text-blue-600'
+              }`}>{trainMessage.text}</p>
+            </div>
+          )}
 
-      {trainMessage && (
-        <div className={`mt-4 p-4 rounded-md ${trainMessage.type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-blue-100 border border-blue-400 text-blue-700'}`}>
-          <p>{trainMessage.text}</p>
-        </div>
-      )}
+          <div className="flex justify-between space-x-4">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex-1 bg-gray-100 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-200 
+                       transition-all duration-300 font-semibold focus:ring-2 focus:ring-gray-300"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 
+                       rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 
+                       font-semibold shadow-lg hover:shadow-xl focus:ring-2 focus:ring-blue-500"
+            >
+              Entraîner le Modèle
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

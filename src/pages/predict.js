@@ -158,95 +158,133 @@ export default function Predict() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-8 mb-20">
-      <h2 className="text-2xl font-semibold text-center mb-6">Prédire les ventes</h2>
-      <form onSubmit={handleSubmit} className="bg-stone-200 p-6 shadow-xl rounded-md">
-
-        {/* Store Dropdown (MODIFIÉ - Utilise handleStoreChange) */}
-        <div className="mb-4 grid grid-cols-12 gap-4">
-          <label className="col-span-3 text-sm font-semibold text-gray-700">Magasin</label>
-          <Select
-            value={(storeOptions || []).find(opt => opt.value === store) || null}
-            onChange={handleStoreChange} // Utiliser la nouvelle fonction
-            options={storeOptions || []}
-            className="col-span-9 mt-2 w-full"
-            placeholder="Sélectionnez un magasin"
-          />
-        </div>
-
-        {/* Product Dropdown (EAN only) (inchangé) */}
-        <div className="mb-4 grid grid-cols-12 gap-4">
-          <label className="col-span-3 text-sm font-semibold text-gray-700">EAN</label>
-          <Select
-            value={(productOptions || []).find(opt => opt.value === product) || null}
-            onChange={handleProductChange}
-            options={productOptions || []}
-            getOptionLabel={(opt) => opt.ean}
-            className="col-span-9 mt-2 w-full"
-            placeholder="Sélectionnez un EAN"
-          />
-        </div>
-
-        {/* Readonly Input for Product Name (inchangé) */}
-        <div className="mb-4 grid grid-cols-12 gap-4">
-          <label className="col-span-3 text-sm font-semibold text-gray-700">Produit</label>
-          <input
-            type="text"
-            value={productLabel}
-            readOnly
-            className="col-span-9 mt-2 w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100"
-            placeholder="Nom du produit"
-          />
-        </div>
-
-        {/* Date Range Picker (inchangé) */}
-        <div className="mb-4 grid grid-cols-12 gap-4">
-          <label className="col-span-3 text-sm font-semibold text-gray-700">Période</label>
-          <div className="col-span-9 mt-2">
-            <input
-              type="text"
-              className="input col-span-9 mt-2 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:border-stone-500 focus:ring-stone-500"
-              placeholder="YYYY-MM-DD to YYYY-MM-DD"
-              id="flatpickr-range"
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12">
+      <div className="max-w-4xl mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Prédiction des Ventes</h2>
+        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-2xl transform hover:scale-[1.01] transition-all duration-300">
+          
+          {/* Store Dropdown */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Magasin</label>
+            <Select
+              value={(storeOptions || []).find(opt => opt.value === store) || null}
+              onChange={handleStoreChange}
+              options={storeOptions || []}
+              className="w-full"
+              classNamePrefix="select"
+              placeholder="Sélectionnez un magasin"
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  padding: '2px',
+                  borderColor: '#e2e8f0',
+                  '&:hover': { borderColor: '#cbd5e1' }
+                }),
+                option: (base, state) => ({
+                  ...base,
+                  backgroundColor: state.isSelected ? '#3b82f6' : state.isFocused ? '#eff6ff' : 'white'
+                })
+              }}
             />
           </div>
-        </div>
 
-        {/* Stock Quantity (inchangé) */}
-        <div className="mb-4 grid grid-cols-12 gap-4">
-          <label className="col-span-3 text-sm font-semibold text-gray-700">Quantité restante</label>
-          <input
-            type="number"
-            value={stockQuantity}
-            readOnly
-            className="col-span-9 mt-2 w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 shadow-sm"
-            placeholder="Quantité restante"
-          />
-        </div>
-
-        {/* Buttons (inchangé) */}
-        <div className="flex justify-between">
-          <button type="button" onClick={handleCancel}
-            className="bg-gray-300 px-6 py-2 rounded-md hover:bg-gray-400">Annuler</button>
-          <button type="submit"
-            className="bg-stone-500 px-6 py-2 rounded-md hover:bg-stone-700 text-white">Prédire</button>
-        </div>
-
-        {/* Affichage de la prédiction (inchangé) */}
-        {predictedQuantity !== null && (
-          <div className="mt-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
-            <p className="font-semibold">Quantité à commander prédite : {predictedQuantity}</p>
+          {/* Product Dropdown */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">EAN</label>
+            <Select
+              value={(productOptions || []).find(opt => opt.value === product) || null}
+              onChange={handleProductChange}
+              options={productOptions || []}
+              getOptionLabel={(opt) => opt.ean}
+              className="w-full"
+              classNamePrefix="select"
+              placeholder="Sélectionnez un EAN"
+              isDisabled={!store}
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  padding: '2px',
+                  borderColor: '#e2e8f0',
+                  '&:hover': { borderColor: '#cbd5e1' }
+                })
+              }}
+            />
           </div>
-        )}
 
-        {/* Affichage des erreurs de prédiction (inchangé) */}
-        {predictionError && (
-          <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
-            <p className="font-semibold">Erreur : {predictionError}</p>
+          {/* Product Name */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Produit</label>
+            <input
+              type="text"
+              value={productLabel}
+              readOnly
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-50"
+              placeholder="Nom du produit"
+            />
           </div>
-        )}
 
-      </form>
+          {/* Date Range */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Période</label>
+            <input
+              type="text"
+              id="flatpickr-range"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 
+                       focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+              placeholder="Sélectionnez une période"
+            />
+          </div>
+
+          {/* Stock Quantity */}
+          <div className="mb-8">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Quantité en stock</label>
+            <input
+              type="number"
+              value={stockQuantity}
+              readOnly
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-50"
+              placeholder="Quantité restante"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-between space-x-4">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex-1 bg-gray-100 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-200 
+                       transition-all duration-300 font-semibold focus:ring-2 focus:ring-gray-300"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 
+                       rounded-lg hover:from-blue-700 hover:to-blue-800 transform hover:scale-[1.02] 
+                       transition-all duration-300 font-semibold shadow-lg hover:shadow-xl"
+            >
+              Prédire
+            </button>
+          </div>
+
+          {/* Results */}
+          {predictedQuantity !== null && (
+            <div className="mt-6 p-6 bg-green-50 border border-green-200 rounded-lg animate-fade-in">
+              <h3 className="text-lg font-semibold text-green-800 mb-2">Résultat de la prédiction</h3>
+              <p className="text-green-700">
+                Quantité à commander recommandée : <span className="font-bold">{predictedQuantity}</span>
+              </p>
+            </div>
+          )}
+
+          {predictionError && (
+            <div className="mt-6 p-6 bg-red-50 border border-red-200 rounded-lg animate-fade-in">
+              <h3 className="text-lg font-semibold text-red-800 mb-2">Erreur</h3>
+              <p className="text-red-700">{predictionError}</p>
+            </div>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

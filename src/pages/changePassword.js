@@ -35,48 +35,63 @@ export default function ChangePassword() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-8">
-      <h2 className="text-2xl font-semibold text-center mb-6">Changer le mot de passe</h2>
-      <form onSubmit={handleChangePassword} className="bg-stone-200 p-6 shadow-xl rounded-md">
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700">Mot de passe actuel</label>
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            className="mt-2 w-full p-2 border border-gray-300 rounded-md"
-            placeholder="Entrez votre mot de passe actuel"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700">Nouveau mot de passe</label>
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="mt-2 w-full p-2 border border-gray-300 rounded-md"
-            placeholder="Entrez votre nouveau mot de passe"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700">Confirmer le nouveau mot de passe</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="mt-2 w-full p-2 border border-gray-300 rounded-md"
-            placeholder="Confirmez votre nouveau mot de passe"
-          />
-        </div>
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        {success && <p className="text-green-500 text-sm mb-4">{success}</p>}
-        <button
-          type="submit"
-          className="w-full bg-stone-500 text-white py-2 rounded-md hover:bg-stone-700"
-        >
-          Changer le mot de passe
-        </button>
-      </form>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12">
+      <div className="max-w-md mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Changer le mot de passe</h2>
+        <form onSubmit={handleChangePassword} className="bg-white p-8 rounded-xl shadow-2xl transform hover:scale-[1.01] transition-all duration-300">
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Mot de passe actuel</label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 
+                       focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+              placeholder="Entrez votre mot de passe actuel"
+            />
+          </div>
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Nouveau mot de passe</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 
+                       focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+              placeholder="Entrez votre nouveau mot de passe"
+            />
+          </div>
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Confirmer le nouveau mot de passe</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 
+                       focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+              placeholder="Confirmez votre nouveau mot de passe"
+            />
+          </div>
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg animate-fade-in">
+              <p className="text-red-600 font-medium">{error}</p>
+            </div>
+          )}
+          {success && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg animate-fade-in">
+              <p className="text-green-600 font-medium">{success}</p>
+            </div>
+          )}
+          <button
+            type="submit"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg 
+                     font-semibold hover:from-blue-700 hover:to-blue-800 transform hover:scale-[1.02] 
+                     transition-all duration-300 shadow-lg hover:shadow-xl"
+          >
+            Changer le mot de passe
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
