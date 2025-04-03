@@ -16,7 +16,7 @@ export default function Header() {
   return (
     <nav className="bg-gradient-to-r from-blue-600 to-blue-800 border-b shadow-lg py-2">
       <div className="container mx-auto flex items-center justify-between max-w-6xl px-4">
-        <Link className="text-white text-xl font-bold hover:text-blue-200 transition-colors duration-300" to="/">
+        <Link className="text-white text-xl font-bold hover:text-blue-200 transition-colors duration-300 ml-8" to="/">
           <img className="h-16 w-auto rounded-lg shadow-md hover:shadow-lg transition-all duration-300" src={logo} alt="" />
         </Link>
 
@@ -47,11 +47,6 @@ export default function Header() {
                   <Link to="/predict" className="text-white font-semibold hover:text-blue-200 transition-colors duration-300">
                     Predict
                   </Link>
-                </li>
-                <li>
-                  <button onClick={handleLogout} className="text-white font-semibold hover:text-blue-200 transition-colors duration-300">
-                    Logout
-                  </button>
                 </li>
               </>
             )}

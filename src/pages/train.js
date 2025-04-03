@@ -42,11 +42,13 @@ export default function Train() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Entraînement du Modèle</h2>
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg overflow-hidden">
+      <div className="p-8">
+        <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-blue-800 mb-8 text-center">
+          Entraînement du Modèle
+        </h2>
 
-        <form onSubmit={handleTrain} className="bg-white p-8 rounded-xl shadow-2xl transform hover:scale-[1.01] transition-all duration-300">
+        <form onSubmit={handleTrain} className="bg-white p-8 rounded-xl shadow-xl">
           <div className="mb-6">
             <label htmlFor="jsonInput" className="block text-lg font-semibold text-gray-700 mb-3">
               Données d'entraînement (JSON)

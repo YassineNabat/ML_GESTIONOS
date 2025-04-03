@@ -17,9 +17,15 @@ import ChangePassword from './pages/changePassword';
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("authToken");
   return token ? (
-    <div className="flex">
+    <div className="flex min-h-screen">
       <Sidebar />
-      <div className="ml-64 w-full">{children}</div>
+      <div className="flex-1 ml-20">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="w-full max-w-[1200px] mx-auto p-4">
+            {children}
+          </div>
+        </div>
+      </div>
     </div>
   ) : (
     <Navigate to="/login" />

@@ -35,10 +35,12 @@ export default function ChangePassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12">
-      <div className="max-w-md mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Changer le mot de passe</h2>
-        <form onSubmit={handleChangePassword} className="bg-white p-8 rounded-xl shadow-2xl transform hover:scale-[1.01] transition-all duration-300">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg overflow-hidden">
+      <div className="p-8">
+        <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-blue-800 mb-8 text-center">
+          Changer le mot de passe
+        </h2>
+        <form onSubmit={handleChangePassword} className="bg-white p-8 rounded-xl shadow-xl">
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">Mot de passe actuel</label>
             <input

@@ -60,14 +60,16 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-12">
-      <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8 px-4 shadow-lg mb-8">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold">Tableau de Bord - Système de Prédiction de Stock</h1>
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg overflow-hidden">
+      <header className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-8 px-4 shadow-lg">
+        <div>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-100 to-white">
+            Tableau de Bord - Système de Prédiction de Stock
+          </h1>
         </div>
       </header>
       
-      <main className="max-w-7xl mx-auto px-4">
+      <main className="p-6">
         {/* Cartes de statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
