@@ -27,7 +27,7 @@ users = {}  # Simule une base de données pour les utilisateurs
 # --- Configuration de la base de données ---
 DB_CONFIG = {
     'DRIVER': '{SQL Server}',
-    'SERVER': 'X75VC\\SQLEXPRESS',
+    'SERVER': 'localhost\\SQLEXPRESS',
     'DATABASE': 'GestionOS',
     'Trusted_Connection': 'yes',
 }
@@ -532,7 +532,7 @@ def get_recent_predictions():
         conn = get_db_connection()
         cursor = conn.cursor()
         query = """
-            SELECT 
+            SELECT TOP(5)
                 ph.prediction_datetime AS date,
                 s.LIB AS magasin,
                 ph.produit AS ean,
