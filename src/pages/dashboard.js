@@ -46,15 +46,33 @@ export default function Dashboard() {
     });
   }, []);
 
+  useEffect(() => {
+    // Fetch recent predictions from the database
+    axios.get('http://127.0.0.1:5000/recent-predictions')
+      .then(response => {
+        setStats(prevStats => ({
+          ...prevStats,
+          recentPredictions: response.data
+        }));
+      })
+      .catch(error => console.error("Erreur lors de la récupération des prédictions :", error));
+  }, []);
+
   // Configuration du graphique
   const chartData = {
     labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
     datasets: [
       {
-        label: 'Précision des prédictions (%)',
-        data: [88, 90, 91, 92, 93, 92.5],
+        label: 'Quantité prédite',
+        data: [1200, 1500, 1800, 1650, 1950, 2000],
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.5)',
+      },
+      {
+        label: 'Commandes réelles',
+        data: [1180, 1450, 1820, 1600, 1900, 2100],
+        borderColor: 'rgb(234, 88, 12)',
+        backgroundColor: 'rgba(234, 88, 12, 0.5)',
       }
     ]
   };
@@ -94,7 +112,7 @@ export default function Dashboard() {
         {/* Graphique et Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Évolution de la Précision</h3>
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Prédictions vs Commandes Réelles</h3>
             <div className="h-[300px]">
               <Line data={chartData} options={{ maintainAspectRatio: false }} />
             </div>
@@ -134,6 +152,7 @@ export default function Dashboard() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Magasin</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">EAN</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité Prédite</th>
                 </tr>
               </thead>
@@ -142,7 +161,8 @@ export default function Dashboard() {
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{pred.date}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{pred.magasin}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{pred.quantite}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{pred.ean}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{pred.quantite_predite}</td>
                   </tr>
                 ))}
               </tbody>

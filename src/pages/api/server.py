@@ -85,7 +85,7 @@ def preprocess_data(df):
     df = df.dropna()
 
     # Encodage des variables catégorielles (magasin, produit)
-    df = pd.get_dummies(df, columns=['magasin', 'produit'], drop_first=True) # MODIFICATION ICI
+    df = pd.get_dummies(df, columns=['magasin', 'produit'], drop_first=True)
 
     # Sélectionner les fonctionnalités et la variable cible
     features = [col for col in df.columns if col not in ['quantite_a_commander', 'date_debut_consommation', 'date_fin_consommation']]
@@ -230,7 +230,7 @@ def predict_command():
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            prediction_datetime = datetime.datetime.now()
+            prediction_datetime = datetime.datetime.now(datetime.timezone.utc)
             insert_query = """
                 INSERT INTO PredictionHistory 
                 ([magasin], [produit], [date_debut_consommation], [date_fin_consommation], 
@@ -473,7 +473,10 @@ def login():
             return jsonify({"error": "Identifiants invalides"}), 401
 
         # Générer un token JWT
-        token = jwt.encode({'username': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, SECRET_KEY)
+        token = jwt.encode(
+            {'username': username, 'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)},
+            SECRET_KEY
+        )
         return jsonify({"token": token}), 200
     except pyodbc.Error as ex:
         sqlstate = ex.args[0]
@@ -518,6 +521,40 @@ def change_password():
         sqlstate = ex.args[0]
         print(f"Erreur de base de données (changement de mot de passe): {sqlstate}")
         return jsonify({"error": "Erreur lors du changement de mot de passe"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+@app.route('/recent-predictions', methods=['GET'])
+def get_recent_predictions():
+    """Retourne les dernières prédictions."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = """
+            SELECT 
+                ph.prediction_datetime AS date,
+                s.LIB AS magasin,
+                ph.produit AS ean,
+                ph.quantite_predite
+            FROM PredictionHistory ph
+            JOIN SITE s ON ph.magasin = s.Code_GOLD
+            ORDER BY ph.prediction_datetime DESC
+        """
+        cursor.execute(query)
+        predictions = []
+        for row in cursor.fetchall():
+            predictions.append({
+                "date": row.date.strftime('%Y-%m-%d %H:%M:%S') if row.date else None,
+                "magasin": row.magasin,
+                "ean": row.ean,
+                "quantite_predite": row.quantite_predite
+            })
+        return jsonify(predictions)
+    except pyodbc.Error as ex:
+        sqlstate = ex.args[0]
+        print(f"Erreur de base de données (prédictions): {sqlstate}")
+        return jsonify({"error": f"Erreur lors de la récupération des prédictions: {sqlstate}"}), 500
     finally:
         if conn:
             conn.close()
