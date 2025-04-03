@@ -1,49 +1,150 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+// Enregistrer les composants ChartJS nécessaires
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalPredictions: 0,
+    averageAccuracy: 0,
+    recentPredictions: []
+  });
+
+  useEffect(() => {
+    // Simuler le chargement des données depuis l'API
+    // Dans un cas réel, vous appelleriez votre API ici
+    setStats({
+      totalPredictions: 278,
+      averageAccuracy: 92.5,
+      recentPredictions: [
+        { date: '2024-01-15', magasin: 'Magasin Paris', quantite: 150 },
+        { date: '2024-01-14', magasin: 'Magasin Lyon', quantite: 200 },
+        { date: '2024-01-13', magasin: 'Magasin Marseille', quantite: 175 }
+      ]
+    });
+  }, []);
+
+  // Configuration du graphique
+  const chartData = {
+    labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
+    datasets: [
+      {
+        label: 'Précision des prédictions (%)',
+        data: [88, 90, 91, 92, 93, 92.5],
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+      }
+    ]
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-6 px-4 shadow-lg">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold">Tableau de bord</h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-12">
+      <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8 px-4 shadow-lg mb-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold">Tableau de Bord - Système de Prédiction de Stock</h1>
         </div>
       </header>
       
-      <main className="max-w-6xl mx-auto mt-8 px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Carte Statistiques */}
-          <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Statistiques</h3>
-            <div className="space-y-2">
-              <p className="text-gray-600">Prédictions totales: <span className="text-blue-600 font-semibold">150</span></p>
-              <p className="text-gray-600">Précision moyenne: <span className="text-green-600 font-semibold">95%</span></p>
+      <main className="max-w-7xl mx-auto px-4">
+        {/* Cartes de statistiques */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Prédictions Totales</h3>
+            <p className="text-3xl font-bold text-blue-600">{stats.totalPredictions}</p>
+            <p className="text-sm text-gray-500 mt-2">Depuis la création</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Précision Moyenne</h3>
+            <p className="text-3xl font-bold text-green-600">{stats.averageAccuracy}%</p>
+            <p className="text-sm text-gray-500 mt-2">Sur les 30 derniers jours</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">État du Modèle</h3>
+            <p className="text-3xl font-bold text-purple-600">Actif</p>
+            <p className="text-sm text-gray-500 mt-2">Dernière mise à jour : Aujourd'hui</p>
+          </div>
+        </div>
+
+        {/* Graphique et Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Évolution de la Précision</h3>
+            <div className="h-[300px]">
+              <Line data={chartData} options={{ maintainAspectRatio: false }} />
             </div>
           </div>
 
-          {/* Carte Actions Rapides */}
-          <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <div className="bg-white p-6 rounded-xl shadow-lg">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Actions Rapides</h3>
-            <div className="space-y-3">
-              <button className="w-full bg-blue-100 text-blue-700 py-2 px-4 rounded-lg hover:bg-blue-200 transition-colors duration-300">
+            <div className="space-y-4">
+              <button 
+                onClick={() => navigate('/predict')}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 font-semibold"
+              >
                 Nouvelle Prédiction
               </button>
-              <button className="w-full bg-green-100 text-green-700 py-2 px-4 rounded-lg hover:bg-green-200 transition-colors duration-300">
-                Voir les Rapports
+              <button 
+                onClick={() => navigate('/train')}
+                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 font-semibold"
+              >
+                Entraîner le Modèle
+              </button>
+              <button 
+                onClick={() => navigate('/change-password')}
+                className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors duration-300 font-semibold"
+              >
+                Paramètres du Compte
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Carte Activité Récente */}
-          <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Activité Récente</h3>
-            <div className="space-y-3">
-              <div className="flex items-center text-sm text-gray-600">
-                <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                Prédiction effectuée pour Magasin A
-              </div>
-              <div className="flex items-center text-sm text-gray-600">
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                Modèle mis à jour
-              </div>
-            </div>
+        {/* Dernières Prédictions */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Dernières Prédictions</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Magasin</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité Prédite</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {stats.recentPredictions.map((pred, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{pred.date}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{pred.magasin}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{pred.quantite}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </main>
