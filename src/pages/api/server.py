@@ -44,7 +44,7 @@ def load_data_for_prediction():
         conn = get_db_connection()
         cursor = conn.cursor()
         query = """
-        select TOP(1000000) S.Code_GOLD as magasin, D.EAN as produit,
+        select S.Code_GOLD as magasin, D.EAN as produit,
                         T.DATE_DEBUT_VENTE as date_debut_consommation,
                         T.DATE_FIN_VENTE as date_fin_consommation,
                         OSE.Stock_Actuel as stock_actuel,
