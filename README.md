@@ -1,14 +1,14 @@
 Machine Learning Project with Python, Scikit-learn && XGBOOST By Mohamed Yassine Nabat && Barkouch Yassine 
 
 ## Python
-## Available python Scripts
+  ## Available python Scripts
 
 In the server.py directory, you all need to run is:
 
 ### `python server.py`
 
 ## ReactJs
-# Getting Started with Create React App
+  # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
