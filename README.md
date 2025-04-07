@@ -1,3 +1,6 @@
+Machine Learning Project with Python, Scikit-learn && XGBOOST By Mohamed Yassine Nabat && Barkouch Yassine 
+
+ReactJs
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
