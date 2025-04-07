@@ -1,4 +1,4 @@
-Machine Learning Project with Python, Scikit-learn && XGBOOST By Mohamed Yassine Nabat && Barkouch Yassine 
+A Machine Learning Project for predection with Python, Scikit-learn && XGBOOST By Mohamed Yassine Nabat && Barkouch Yassine 
 
 ## Python
   ## Available python Scripts
