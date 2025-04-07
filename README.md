@@ -3,7 +3,7 @@ Machine Learning Project with Python, Scikit-learn && XGBOOST By Mohamed Yassine
 ## Python
   ## Available python Scripts
 
-In the server.py directory, you all need to run is:
+In the server.py directory, which is " ML_GESTIONOS/src/pages/api " you all need to run is:
 
 ### `python server.py`
 
